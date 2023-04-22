@@ -3,11 +3,13 @@ from pygame import *
 
 font.init()
 font = font.Font(None, 40)
-win = font.render('you win', True, (255,215,0))
-lose = font.render('you lose', True, (255,0,0))
+lose1 = font.render('игрок 1 проиграл(((', True, (255,0,0))
+lose2 = font.render('игрок 2 проиграл(((', True, (255,0,0))
 win_width = 700
 win_height = 500
 speed = 5
+speed_x = 3
+speed_y = 3
 
 class GameSprite(sprite.Sprite):
     def __init__(self, player_image, player_x, player_y, player_width, player_height, player_speed):
@@ -19,19 +21,28 @@ class GameSprite(sprite.Sprite):
         self.rect.y = player_y
         self.width = player_width
         self.height = player_height      
+    
     def reset(self):
         window.blit(self.image, (self.rect.x, self.rect.y))
 
 class Player(GameSprite):
-    def update(self):
+    def update_l(self):
         key_pressed = key.get_pressed()
 
-        if key_pressed[K_d] and self.rect.x < 600:
-            self.rect.x += self.speed
+        if key_pressed[K_s] and self.rect.y < 370:
+            self.rect.y += self.speed
 
-        if key_pressed[K_a] and self.rect.x > 5:
-            self.rect.x -= self.speed
+        if key_pressed[K_w] and self.rect.y > 5:
+            self.rect.y -= self.speed
+        
 
+    def update_r(self):
+        key_pressed = key.get_pressed()
+        if key_pressed[K_DOWN] and self.rect.y < 370:
+            self.rect.y += self.speed
+
+        if key_pressed[K_UP] and self.rect.y > 5:
+            self.rect.y -= self.speed
 
 
 window = display.set_mode((700, 500))
@@ -39,22 +50,14 @@ display.set_caption('Ping-Pong')
 
 
 
-rock = Player('rocket.png', 350, 430, 65, 65, speed)
-
-monsters = sprite.Group()
-bullets = sprite.Group()
-asteroids = sprite.Group()
+rock1 = Player('platform.png', 2, 300, 65, 120, speed)
+rock2 = Player('platform.png', 640, 300, 65, 120, speed)
+ball = GameSprite('ball.png', 350, 430, 65, 65, speed)
 
 
-for i in range (1, 6):
-    monster = Enemy('ufo.png', randint(5, 615), -50, 80, 50, randint(1, 2))
-    monsters.add(monster)
 
-for i in range (1,4):
-    asteroid = Enemy('asteroid.png', randint(5, 615), -50, 65, 65, randint(1, 2))
-    asteroids.add(asteroid)
 
-background = transform.scale(image.load('almazi.jpg'),(700, 500))
+background = transform.scale(image.load('blue.jpg'),(700, 500))
 FPS = 60
 clock = time.Clock()
 finish = False
@@ -63,14 +66,29 @@ while game:
     for e in event.get():
         if e.type == QUIT:
             game = False
-        elif e.type == KEYDOWN:
-            if e.key == K_SPACE:
-                rock.fire()
+        
+
 
     if not finish:
         window.blit(background, (0,0))
-        rock.update()
+        rock1.update_l()
+        rock2.update_r()
+        ball.reset()
+        rock1.reset()
+        rock2.reset()
+        ball.rect.x += speed_x
+        ball.rect.y += speed_y
+    if ball.rect.y > win_height-50 or ball.rect.y < 0:
+        speed_y *= -1
+    if sprite.collide_rect(rock1, ball) or sprite.collide_rect(rock2, ball):
+        speed_x *= -1
+    if ball.rect.x < 0:
+        finish = True
+        window.blit(lose1,(200,200))
 
-        
+    if ball.rect.x > 650:
+        finish = True
+        window.blit(lose2,(200,200))
+
     display.update()
     clock.tick(FPS)
